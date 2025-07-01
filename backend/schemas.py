@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERRORfrom pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, validator
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date
 from enum import Enum
@@ -349,17 +349,16 @@ class RecommendationResponse(RecommendationBase):
 
 # Weather schemas
 class WeatherResponse(BaseSchema):
-    destination_id: int
-    date: datetime
-    temperature_min: Optional[float] = None
-    temperature_max: Optional[float] = None
-    humidity: Optional[float] = None
-    precipitation: Optional[float] = None
-    wind_speed: Optional[float] = None
-    weather_condition: Optional[str] = None
-    weather_description: Optional[str] = None
+    temperature: float
+    feels_like: float
+    humidity: int
+    pressure: int
+    description: str
+    icon: str
+    wind_speed: float
+    wind_direction: int
+    visibility: int
     uv_index: Optional[float] = None
-    visibility: Optional[float] = None
 
 # Trip planning schemas
 class TripPlanningRequest(BaseSchema):
@@ -377,16 +376,416 @@ class TripPlanningRequest(BaseSchema):
 class ItineraryDay(BaseSchema):
     day_number: int
     date: date
-    morning: List[Dict[str, Any]] = []
-    afternoon: List[Dict[str, Any]] = []
-    evening: List[Dict[str, Any]] = []
+    activities: List[Dict[str, Any]] = []
     estimated_cost: Optional[float] = None
+    weather: Optional[WeatherResponse] = None
     notes: Optional[str] = None
 
 class TripPlanningResponse(BaseSchema):
     trip_summary: Dict[str, Any]
     itinerary: List[ItineraryDay]
-    recommendations: Dict[str, List[RecommendationResponse]]
+    destination_info: Dict[str, Any]
     estimated_total_cost: Optional[float] = None
-    weather_forecast: List[WeatherResponse] = []
     travel_tips: List[str] = []
+
+# Open source API integration schemas
+class OpenStreetMapLocation(BaseSchema):
+    display_name: str
+    latitude: float
+    longitude: float
+    country: str
+    city: Optional[str] = None
+    state: Optional[str] = None
+    address: Dict[str, Any]
+
+class WikipediaInfo(BaseSchema):
+    title: str
+    extract: str
+    url: str
+    thumbnail: Optional[str] = None
+
+# Search schemas for open APIs
+class LocationSearchRequest(BaseSchema):
+    query: str = Field(..., min_length=1, max_length=200)
+    limit: int = Field(5, ge=1, le=20)
+
+class POISearchRequest(BaseSchema):
+    location: str
+    category: Optional[str] = None  # tourism, food, accommodation, etc.
+    radius: int = Field(5000, ge=100, le=50000)  # in meters
+
+class POIResponse(BaseSchema):
+    name: str
+    category: str
+    latitude: float
+    longitude: float
+    address: Optional[str] = None
+    rating: Optional[float] = None
+    tags: Dict[str, str]
+    distance: Optional[float] = None
+
+# Booking simulation schemas (for demo purposes)
+class FlightSearchRequest(BaseSchema):
+    origin: str = Field(..., min_length=3, max_length=3)
+    destination: str = Field(..., min_length=3, max_length=3)
+    departure_date: date
+    return_date: Optional[date] = None
+    passengers: int = Field(1, ge=1, le=9)
+    travel_class: str = "Economy"
+
+class TrainSearchRequest(BaseSchema):
+    origin: str
+    destination: str
+    departure_date: date
+    passengers: int = Field(1, ge=1, le=6)
+    train_class: str = "Sleeper"
+
+class HotelSearchRequest(BaseSchema):
+    city: str
+    check_in_date: date
+    check_out_date: date
+    guests: int = Field(1, ge=1, le=10)
+    rooms: int = Field(1, ge=1, le=5)
+
+class BookingResponse(BaseSchema):
+    booking_id: str
+    type: BookingTypeEnum
+    provider: str
+    service_name: str
+    total_cost: float
+    currency: str
+    status: BookingStatusEnum
+    confirmation_details: Dict[str, Any]
+
+# Flight Booking Schemas
+class FlightSearchRequest(BaseSchema):
+    origin: str = Field(..., min_length=3, max_length=3, description="Origin airport code (IATA)")
+    destination: str = Field(..., min_length=3, max_length=3, description="Destination airport code (IATA)")
+    departure_date: date
+    return_date: Optional[date] = None
+    passengers: int = Field(1, ge=1, le=9)
+    travel_class: str = Field("Economy", description="Economy, Premium Economy, Business, First")
+
+class PassengerInfo(BaseSchema):
+    first_name: str = Field(..., min_length=1, max_length=50)
+    last_name: str = Field(..., min_length=1, max_length=50)
+    date_of_birth: date
+    gender: str = Field(..., description="Male, Female, Other")
+    passport_number: Optional[str] = None
+    nationality: str = Field(..., min_length=2, max_length=3)
+    meal_preference: Optional[str] = None
+    special_assistance: Optional[str] = None
+
+class FlightOption(BaseSchema):
+    flight_id: str
+    airline: str
+    flight_number: str
+    aircraft_type: str
+    departure_time: datetime
+    arrival_time: datetime
+    duration_minutes: int
+    stops: int
+    layover_airports: List[str] = []
+    price: float
+    currency: str = "USD"
+    available_seats: int
+    baggage_included: bool
+    meal_included: bool
+    cancellation_allowed: bool
+    change_allowed: bool
+
+class FlightBookingRequest(BaseSchema):
+    flight_id: str
+    passengers: List[PassengerInfo]
+    contact_email: EmailStr
+    contact_phone: str
+    emergency_contact: Dict[str, str]
+    seat_preferences: Optional[List[str]] = []
+    special_requests: Optional[str] = None
+
+class FlightBookingResponse(BaseSchema):
+    booking_reference: str
+    status: BookingStatusEnum
+    flight_details: FlightOption
+    passengers: List[PassengerInfo]
+    total_cost: float
+    currency: str
+    payment_status: str
+    cancellation_deadline: Optional[datetime] = None
+    check_in_url: Optional[str] = None
+    created_at: datetime
+
+# Hotel Booking Schemas
+class HotelSearchRequest(BaseSchema):
+    city: str = Field(..., min_length=1, max_length=100)
+    check_in_date: date
+    check_out_date: date
+    guests: int = Field(1, ge=1, le=10)
+    rooms: int = Field(1, ge=1, le=5)
+    star_rating: Optional[int] = Field(None, ge=1, le=5)
+    max_price_per_night: Optional[float] = None
+    amenities: Optional[List[str]] = []
+
+    @validator('check_out_date')
+    def check_out_after_check_in(cls, v, values):
+        if 'check_in_date' in values and v <= values['check_in_date']:
+            raise ValueError('Check-out date must be after check-in date')
+        return v
+
+class RoomOption(BaseSchema):
+    room_id: str
+    room_type: str
+    room_name: str
+    bed_type: str
+    max_occupancy: int
+    room_size: Optional[str] = None
+    amenities: List[str] = []
+    price_per_night: float
+    total_price: float
+    currency: str = "USD"
+    available_rooms: int
+    cancellation_policy: str
+    breakfast_included: bool
+    wifi_included: bool
+
+class HotelOption(BaseSchema):
+    hotel_id: str
+    hotel_name: str
+    hotel_chain: Optional[str] = None
+    star_rating: int
+    address: str
+    city: str
+    country: str
+    latitude: float
+    longitude: float
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    description: str
+    amenities: List[str] = []
+    images: List[str] = []
+    rating: float
+    review_count: int
+    distance_to_center: float
+    rooms: List[RoomOption]
+
+class GuestInfo(BaseSchema):
+    first_name: str = Field(..., min_length=1, max_length=50)
+    last_name: str = Field(..., min_length=1, max_length=50)
+    date_of_birth: Optional[date] = None
+    gender: Optional[str] = None
+    nationality: Optional[str] = None
+    passport_number: Optional[str] = None
+
+class HotelBookingRequest(BaseSchema):
+    hotel_id: str
+    room_id: str
+    guests: List[GuestInfo]
+    contact_email: EmailStr
+    contact_phone: str
+    special_requests: Optional[str] = None
+    arrival_time: Optional[str] = None
+    smoking_preference: bool = False
+
+class HotelBookingResponse(BaseSchema):
+    booking_reference: str
+    status: BookingStatusEnum
+    hotel_details: HotelOption
+    room_details: RoomOption
+    guests: List[GuestInfo]
+    check_in_date: date
+    check_out_date: date
+    nights: int
+    total_cost: float
+    currency: str
+    payment_status: str
+    cancellation_deadline: Optional[datetime] = None
+    created_at: datetime
+
+# Train Booking Schemas
+class TrainSearchRequest(BaseSchema):
+    origin_station: str = Field(..., min_length=1, max_length=100)
+    destination_station: str = Field(..., min_length=1, max_length=100)
+    departure_date: date
+    passengers: int = Field(1, ge=1, le=6)
+    train_class: str = Field("Sleeper", description="Sleeper, 3A, 2A, 1A")
+    quota: Optional[str] = Field("GN", description="General, Ladies, Senior Citizen, etc.")
+
+class TrainOption(BaseSchema):
+    train_id: str
+    train_name: str
+    train_number: str
+    departure_time: datetime
+    arrival_time: datetime
+    duration_minutes: int
+    distance_km: int
+    stops: List[str] = []
+    train_class: str
+    available_seats: int
+    price: float
+    currency: str = "INR"
+    tatkal_available: bool
+    waiting_list: int
+    chart_status: str
+
+class TrainPassengerInfo(BaseSchema):
+    first_name: str = Field(..., min_length=1, max_length=50)
+    last_name: str = Field(..., min_length=1, max_length=50)
+    age: int = Field(..., ge=1, le=120)
+    gender: str = Field(..., description="Male, Female, Transgender")
+    berth_preference: Optional[str] = Field(None, description="Lower, Middle, Upper, Side Lower, Side Upper")
+    food_choice: Optional[str] = Field(None, description="Veg, Non-Veg")
+
+class TrainBookingRequest(BaseSchema):
+    train_id: str
+    passengers: List[TrainPassengerInfo]
+    contact_email: EmailStr
+    contact_phone: str
+    id_proof_type: str = Field(..., description="Aadhar, PAN, Passport, etc.")
+    id_proof_number: str
+    auto_upgrade: bool = False
+
+class TrainBookingResponse(BaseSchema):
+    booking_reference: str
+    pnr_number: str
+    status: BookingStatusEnum
+    train_details: TrainOption
+    passengers: List[TrainPassengerInfo]
+    seat_numbers: List[str] = []
+    coach_numbers: List[str] = []
+    total_cost: float
+    currency: str
+    booking_status: str  # Confirmed, RAC, Waiting List
+    chart_status: str
+    cancellation_charges: float
+    created_at: datetime
+
+# Generic Booking Management
+class BookingBase(BaseSchema):
+    booking_type: BookingTypeEnum
+    booking_reference: str
+    status: BookingStatusEnum
+    total_cost: float
+    currency: str
+    created_at: datetime
+
+class BookingListResponse(BaseSchema):
+    bookings: List[BookingBase]
+    total_count: int
+    page: int
+    page_size: int
+
+class BookingCancellationRequest(BaseSchema):
+    booking_reference: str
+    cancellation_reason: str
+    refund_to_original_method: bool = True
+
+class BookingCancellationResponse(BaseSchema):
+    booking_reference: str
+    cancellation_status: str
+    refund_amount: float
+    refund_method: str
+    processing_time: str
+    cancellation_charges: float
+
+# Payment Schemas
+class PaymentRequest(BaseSchema):
+    booking_reference: str
+    payment_method: str = Field(..., description="Credit Card, Debit Card, UPI, Net Banking, Wallet")
+    amount: float
+    currency: str = "USD"
+    card_details: Optional[Dict[str, str]] = None
+    billing_address: Optional[Dict[str, str]] = None
+
+class PaymentResponse(BaseSchema):
+    payment_id: str
+    booking_reference: str
+    amount: float
+    currency: str
+    status: str
+    payment_method: str
+    transaction_id: str
+    created_at: datetime
+
+# Trip Planning with Bookings
+class TripPlanningRequest(BaseSchema):
+    destination: str = Field(..., min_length=1, max_length=100)
+    start_date: date
+    end_date: date
+    budget: Optional[float] = None
+    travelers_count: int = Field(1, ge=1, le=20)
+    trip_type: str = "Solo"
+    accommodation_preference: str = "Hotel"
+    interests: List[str] = []
+    pace: str = "Balanced"
+    special_requests: Optional[str] = None
+    include_flights: bool = True
+    include_hotels: bool = True
+    include_activities: bool = True
+
+class ItineraryDay(BaseSchema):
+    day_number: int
+    date: date
+    activities: List[Dict[str, Any]] = []
+    estimated_cost: Optional[float] = None
+    notes: Optional[str] = None
+
+class TripPlanningResponse(BaseSchema):
+    trip_id: str
+    trip_summary: Dict[str, Any]
+    itinerary: List[ItineraryDay]
+    flight_options: List[FlightOption] = []
+    hotel_options: List[HotelOption] = []
+    estimated_total_cost: Optional[float] = None
+    travel_tips: List[str] = []
+    booking_timeline: List[Dict[str, Any]] = []
+
+# Search and Discovery
+class LocationSearchRequest(BaseSchema):
+    query: str = Field(..., min_length=1, max_length=200)
+    limit: int = Field(5, ge=1, le=20)
+
+class LocationResponse(BaseSchema):
+    name: str
+    country: str
+    city: Optional[str] = None
+    latitude: float
+    longitude: float
+    description: Optional[str] = None
+    best_time_to_visit: Optional[str] = None
+    average_budget: Optional[float] = None
+
+class RecommendationResponse(BaseSchema):
+    id: int
+    category: str
+    name: str
+    description: str
+    rating: Optional[float] = None
+    price_range: Optional[str] = None
+    location: str
+    tags: List[str]
+    booking_available: bool = False
+    booking_url: Optional[str] = None
+
+# Destination and Weather
+class WeatherResponse(BaseSchema):
+    temperature: float
+    feels_like: float
+    humidity: int
+    pressure: int
+    description: str
+    icon: str
+    wind_speed: float
+    visibility: int
+
+class DestinationResponse(BaseSchema):
+    id: int
+    name: str
+    country: str
+    city: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    description: Optional[str] = None
+    weather_info: Optional[WeatherResponse] = None
+    attractions: List[Dict[str, Any]] = []
+    local_cuisine: List[Dict[str, Any]] = []
+    created_at: datetime
