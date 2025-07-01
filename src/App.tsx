@@ -14,24 +14,62 @@ function App() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load trips from localStorage on component mount
   useEffect(() => {
-    const savedTrips = localStorage.getItem('travelPlannerTrips');
-    if (savedTrips) {
-      const parsedTrips = JSON.parse(savedTrips).map((trip: any) => ({
-        ...trip,
-        startDate: new Date(trip.startDate),
-        endDate: new Date(trip.endDate),
-      }));
-      setTrips(parsedTrips);
+    try {
+      setIsLoading(true);
+      const savedTrips = localStorage.getItem('travelPlannerTrips');
+      if (savedTrips) {
+        const parsedTrips = JSON.parse(savedTrips);
+        
+        // Validate and convert trip data
+        const validTrips = parsedTrips
+          .filter((trip: any) => {
+            // Basic validation
+            return trip && 
+                   trip.id && 
+                   trip.destination && 
+                   trip.startDate && 
+                   trip.endDate &&
+                   trip.budget &&
+                   trip.travelers;
+          })
+          .map((trip: any) => ({
+            ...trip,
+            startDate: new Date(trip.startDate),
+            endDate: new Date(trip.endDate),
+            budget: Number(trip.budget),
+            travelers: Number(trip.travelers),
+            notes: trip.notes || '',
+            status: trip.status || 'planned'
+          }));
+        
+        setTrips(validTrips);
+      }
+    } catch (err) {
+      console.error('Error loading trips from localStorage:', err);
+      setError('Failed to load saved trips');
+      // Clear corrupted data
+      localStorage.removeItem('travelPlannerTrips');
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   // Save trips to localStorage whenever trips change
   useEffect(() => {
-    localStorage.setItem('travelPlannerTrips', JSON.stringify(trips));
-  }, [trips]);
+    if (!isLoading) {
+      try {
+        localStorage.setItem('travelPlannerTrips', JSON.stringify(trips));
+      } catch (err) {
+        console.error('Error saving trips to localStorage:', err);
+        setError('Failed to save trips');
+      }
+    }
+  }, [trips, isLoading]);
 
   const handleDestinationSelect = (destination: Destination) => {
     setSelectedDestination(destination);
@@ -39,26 +77,56 @@ function App() {
   };
 
   const handleTripSave = (tripData: Omit<Trip, 'id'>) => {
-    const newTrip: Trip = {
-      ...tripData,
-      id: Date.now().toString(),
-    };
-    setTrips(prev => [...prev, newTrip]);
-    setActiveTab('trips');
+    try {
+      const newTrip: Trip = {
+        ...tripData,
+        id: `trip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      };
+      
+      setTrips(prev => [...prev, newTrip]);
+      setActiveTab('trips');
+      setError(null);
+    } catch (err) {
+      console.error('Error saving trip:', err);
+      setError('Failed to save trip');
+    }
   };
 
   const handleTripDelete = (tripId: string) => {
-    setTrips(prev => prev.filter(trip => trip.id !== tripId));
+    try {
+      setTrips(prev => prev.filter(trip => trip.id !== tripId));
+      setError(null);
+    } catch (err) {
+      console.error('Error deleting trip:', err);
+      setError('Failed to delete trip');
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedDestination(null);
   };
 
   const filteredDestinations = destinations.filter(destination => {
     const matchesSearch = destination.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         destination.country.toLowerCase().includes(searchTerm.toLowerCase());
+                         destination.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         destination.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCountry = !selectedCountry || destination.country === selectedCountry;
     return matchesSearch && matchesCountry;
   });
 
   const countries = [...new Set(destinations.map(d => d.country))].sort();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your travel plans...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -67,6 +135,34 @@ function App() {
         onTabChange={setActiveTab} 
         tripCount={trips.length}
       />
+
+      {error && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+              <div className="ml-auto pl-3">
+                <button
+                  onClick={() => setError(null)}
+                  className="text-red-400 hover:text-red-600"
+                >
+                  <span className="sr-only">Dismiss</span>
+                  <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'explore' ? (
@@ -163,7 +259,7 @@ function App() {
         <TripPlanningModal
           destination={selectedDestination}
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={handleModalClose}
           onSave={handleTripSave}
         />
       )}

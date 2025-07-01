@@ -8,13 +8,24 @@ interface DestinationCardProps {
 }
 
 export const DestinationCard: React.FC<DestinationCardProps> = ({ destination, onSelect }) => {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.target as HTMLImageElement;
+    target.src = 'https://images.pexels.com/photos/1285625/pexels-photo-1285625.jpeg?auto=compress&cs=tinysrgb&w=800';
+  };
+
+  const handlePlanTrip = () => {
+    onSelect(destination);
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
       <div className="relative h-48 overflow-hidden">
         <img
           src={destination.imageUrl}
-          alt={destination.name}
+          alt={`${destination.name}, ${destination.country}`}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          onError={handleImageError}
+          loading="lazy"
         />
         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1">
           <Star className="w-4 h-4 text-yellow-500 fill-current" />
@@ -49,7 +60,7 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({ destination, o
           <div className="flex flex-wrap gap-1">
             {destination.activities.slice(0, 3).map((activity, index) => (
               <span
-                key={index}
+                key={`${destination.id}-activity-${index}`}
                 className="bg-blue-50 text-blue-700 px-2 py-1 rounded-full text-xs"
               >
                 {activity}
@@ -62,8 +73,9 @@ export const DestinationCard: React.FC<DestinationCardProps> = ({ destination, o
         </div>
         
         <button
-          onClick={() => onSelect(destination)}
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
+          onClick={handlePlanTrip}
+          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          aria-label={`Plan a trip to ${destination.name}`}
         >
           Plan Trip
         </button>
