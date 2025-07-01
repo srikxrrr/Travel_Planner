@@ -36,19 +36,23 @@ def display_berth_map(rows=3, berths_per_row=4, taken_berths=None, key_prefix="t
     return st.session_state[key_prefix]
 
 # Page config – only once, at the top
-st.set_page_config(page_title="Travel Planner & Flight Booking", page_icon="🌍", layout="centered")
+st.set_page_config(page_title="Travel Planner & Booking System", page_icon="🌍", layout="centered")
 
 # ---------- Load model ---
 @st.cache_resource
 def load_model():
-    tok = AutoTokenizer.from_pretrained("google/flan-t5-base")
-    mdl = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")
-    return tok, mdl
+    try:
+        tok = AutoTokenizer.from_pretrained("google/flan-t5-base")
+        mdl = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")
+        return tok, mdl
+    except Exception as e:
+        st.error(f"Error loading AI model: {e}")
+        return None, None
 
 tokenizer, model = load_model()
 
 # ---------- Tabs ----------
-tab1, tab2 = st.tabs(["🗺 Travel Planner", "✈ Flight Booking"])
+tab1, tab2, tab3 = st.tabs(["🗺 Travel Planner", "✈ Flight Booking", "🚆 Train Booking"])
 
 # ===== 1. TRAVEL PLANNER =====
 with tab1:
@@ -59,7 +63,7 @@ with tab1:
         destination = st.text_input("Destination", placeholder="e.g., Paris")
         days = st.number_input("Trip Duration (days)", 1, 60, 5)
         month = st.text_input("Travel Month / Season", placeholder="e.g., April or Summer")
-        budget = st.text_input("Total Budget", placeholder="e.g., $1000 or ₹50 000")
+        budget = st.text_input("Total Budget", placeholder="e.g., $1000 or ₹50,000")
         travel_type = st.selectbox("Travel Type", ["Solo", "Couple", "Family", "Group", "Business"])
         accommodation = st.selectbox("Accommodation", ["Hostel", "Budget Hotel", "Airbnb", "Luxury Hotel"])
         interests = st.text_input("Your Interests", placeholder="e.g., food, history, beaches")
@@ -70,34 +74,40 @@ with tab1:
     if submit:
         if not destination or not month or not interests:
             st.warning("Please fill in Destination, Month/Season, and Interests.")
+        elif tokenizer is None or model is None:
+            st.error("AI model is not available. Please check your internet connection and try again.")
         else:
             with st.spinner("Generating your travel plan..."):
-                prompt = (
-                    f"Plan a {days}-day {travel_type.lower()} trip to {destination} in {month}. "
-                    f"Budget: {budget or 'not specified'}. "
-                    f"The traveler prefers a {pace.lower()} itinerary and will stay in a {accommodation}. "
-                    f"Interests include {interests}. "
-                )
-                if special_requests.strip():
-                    prompt += f"Special requests: {special_requests.strip()}. "
-                prompt += (
-                    "Provide a detailed, day‑by‑day itinerary with morning, afternoon, and evening plans. "
-                    "Include food recommendations, accommodations, transport tips, and safety advice."
-                )
+                try:
+                    prompt = (
+                        f"Plan a {days}-day {travel_type.lower()} trip to {destination} in {month}. "
+                        f"Budget: {budget or 'not specified'}. "
+                        f"The traveler prefers a {pace.lower()} itinerary and will stay in a {accommodation}. "
+                        f"Interests include {interests}. "
+                    )
+                    if special_requests.strip():
+                        prompt += f"Special requests: {special_requests.strip()}. "
+                    prompt += (
+                        "Provide a detailed, day‑by‑day itinerary with morning, afternoon, and evening plans. "
+                        "Include food recommendations, accommodations, transport tips, and safety advice."
+                    )
 
-                inputs = tokenizer(prompt, return_tensors="pt", truncation=True)
-                outputs = model.generate(
-                    **inputs,
-                    max_new_tokens=500,
-                    temperature=0.9,
-                    top_p=0.95,
-                    repetition_penalty=1.5,
-                    no_repeat_ngram_size=3,
-                )
-                plan = tokenizer.decode(outputs[0], skip_special_tokens=True)
+                    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+                    outputs = model.generate(
+                        **inputs,
+                        max_new_tokens=500,
+                        temperature=0.9,
+                        top_p=0.95,
+                        repetition_penalty=1.5,
+                        no_repeat_ngram_size=3,
+                    )
+                    plan = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-            st.subheader("Your AI‑Generated Travel Plan")
-            st.markdown(plan.replace("\n", "\n\n"))
+                    st.subheader("Your AI‑Generated Travel Plan")
+                    st.markdown(plan.replace("\n", "\n\n"))
+                except Exception as e:
+                    st.error(f"Error generating travel plan: {e}")
+                    st.info("Please try again with a shorter description or check your internet connection.")
 
 # ===== 2. FLIGHT BOOKING =====
 with tab2:
@@ -136,7 +146,7 @@ with tab2:
                     "Flight": f"{airlines[i]} {random.randint(100, 999)}",
                     "Departure": dep.strftime("%H:%M"),
                     "Arrival": arr.strftime("%H:%M"),
-                    "Duration": f"{(arr - dep).seconds // 3600} h {(arr - dep).seconds % 3600 // 60} m",
+                    "Duration": f"{(arr - dep).seconds // 3600} h {(arr - dep).seconds % 3600 // 60} m",
                     "Stops": "Non‑stop",
                     "Base Price": price,
                     "Tax": round(tax),
@@ -167,8 +177,9 @@ with tab2:
                         st.write("### Booking Summary")
                         st.write(booked[["Flight", "Departure", "Arrival", "Base Price", "Tax", "Service", "Total"]])
                         st.write(f"**Passengers:** {passengers}")
-                        st.write(f"**Grand Total:** ₹{int(grand_total)}")
-                        st.info("E‑tickets have been sent to your personal email.")
+                        st.write(f"**Grand Total:** ₹{int(grand_total):,}")
+                        st.info("E‑tickets have been sent to your email.")
+
 # ===== 3. TRAIN BOOKING =====
 with tab3:
     st.header("Train Ticket Booking")
@@ -207,7 +218,7 @@ with tab3:
                 "Train": f"{train_names[i]} {random.randint(1000, 2999)}",
                 "Departure": dep.strftime("%H:%M"),
                 "Arrival": arr.strftime("%H:%M"),
-                "Duration": f"{(arr - dep).seconds // 3600} h {(arr - dep).seconds % 3600 // 60} m",
+                "Duration": f"{(arr - dep).seconds // 3600} h {(arr - dep).seconds % 3600 // 60} m",
                 "Class": train_class,
                 "Base Fare": fare,
                 "Tax": round(tax),
@@ -221,29 +232,30 @@ with tab3:
         booked_trains = selected_trains[selected_trains["Select"]]
 
         if not booked_trains.empty:
-    st.success(f"{len(booked_trains)} train(s) selected. Enter passenger details below.")
-    with st.form("train_booking_form"):
-        st.header("Passenger Details")
-        names = [st.text_input(f"Passenger {i+1} Name", key=f"train_name_{i}") for i in range(train_passengers)]
-        contact = st.text_input("Contact Email", key="train_contact")
+            st.success(f"{len(booked_trains)} train(s) selected. Enter passenger details below.")
+            with st.form("train_booking_form"):
+                st.header("Passenger Details")
+                names = [st.text_input(f"Passenger {i+1} Name", key=f"train_name_{i}") for i in range(train_passengers)]
+                contact = st.text_input("Contact Email", key="train_contact")
 
-        # Display berth selection UI
-        selected_berths = display_berth_map(rows=3, berths_per_row=4, key_prefix="train_berth")
+                # Display berth selection UI
+                selected_berths = display_berth_map(rows=3, berths_per_row=4, key_prefix="train_berth")
 
-        confirm = st.form_submit_button("Confirm Booking")
+                confirm = st.form_submit_button("Confirm Booking")
 
-        if confirm:
-            if "" in names or contact == "":
-                st.error("Please fill all passenger names and contact email.")
-            elif len(selected_berths) < train_passengers:
-                st.error(f"Please select at least {train_passengers} berths.")
-            else:
-                grand_total = booked_trains["Total"].sum() * train_passengers
-                st.success("Train booking confirmed! 🚆")
-                st.write("### Booking Summary")
-                st.write(booked_trains[["Train", "Departure", "Arrival", "Class", "Base Fare", "Tax", "Service Fee", "Total"]])
-                st.write(f"**Passengers:** {train_passengers}")
-                st.write(f"**Grand Total:** ₹{int(grand_total):,}")
-                for i in range(train_passengers):
-                    st.write(f"**Passenger {i+1}:** {names[i]} — **Berth:** {selected_berths[i]}")
-                st.info("Tickets have been sent to your personal email.")
+                if confirm:
+                    if "" in names or contact == "":
+                        st.error("Please fill all passenger names and contact email.")
+                    elif len(selected_berths) < train_passengers:
+                        st.error(f"Please select at least {train_passengers} berths.")
+                    else:
+                        grand_total = booked_trains["Total"].sum() * train_passengers
+                        st.success("Train booking confirmed! 🚆")
+                        st.write("### Booking Summary")
+                        st.write(booked_trains[["Train", "Departure", "Arrival", "Class", "Base Fare", "Tax", "Service Fee", "Total"]])
+                        st.write(f"**Passengers:** {train_passengers}")
+                        st.write(f"**Grand Total:** ₹{int(grand_total):,}")
+                        for i in range(train_passengers):
+                            berth = selected_berths[i] if i < len(selected_berths) else "Not assigned"
+                            st.write(f"**Passenger {i+1}:** {names[i]} — **Berth:** {berth}")
+                        st.info("Tickets have been sent to your email.")
