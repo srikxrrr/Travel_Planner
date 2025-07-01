@@ -1,0 +1,97 @@
+### Travel Planner API Tests
+
+# Variables
+@baseUrl = http://localhost:8000
+@apiUrl = {{baseUrl}}/api/v1
+
+### Health Check
+GET {{apiUrl}}/health
+
+### Register User
+POST {{apiUrl}}/auth/register
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "email": "test@example.com",
+    "full_name": "Test User",
+    "password": "testpassword123"
+}
+
+### Login User
+POST {{apiUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "username": "testuser",
+    "password": "testpassword123"
+}
+
+### Get Current User (requires token)
+GET {{apiUrl}}/auth/me
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Search Destinations
+GET {{apiUrl}}/destinations/search?query=paris&limit=5
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Get Weather
+GET {{apiUrl}}/weather/current?city=paris
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### Plan Trip
+POST {{apiUrl}}/trips/plan
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "destination": "Paris",
+    "start_date": "2024-06-01",
+    "end_date": "2024-06-07",
+    "budget": 2000,
+    "travelers_count": 2,
+    "trip_type": "Couple",
+    "accommodation_preference": "Hotel",
+    "interests": ["culture", "food", "shopping"],
+    "pace": "Balanced"
+}
+
+### Search Flights
+POST {{apiUrl}}/bookings/flights/search
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "origin": "NYC",
+    "destination": "CDG",
+    "departure_date": "2024-06-01",
+    "passengers": 2,
+    "travel_class": "Economy"
+}
+
+### Search Hotels
+POST {{apiUrl}}/bookings/hotels/search
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "city": "Paris",
+    "check_in_date": "2024-06-01",
+    "check_out_date": "2024-06-07",
+    "guests": 2,
+    "rooms": 1,
+    "star_rating": 4
+}
+
+### Search Trains
+POST {{apiUrl}}/bookings/trains/search
+Content-Type: application/json
+Authorization: Bearer YOUR_TOKEN_HERE
+
+{
+    "origin_station": "New Delhi",
+    "destination_station": "Mumbai",
+    "departure_date": "2024-06-01",
+    "passengers": 2,
+    "train_class": "3A"
+}
