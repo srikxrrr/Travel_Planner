@@ -159,12 +159,14 @@ function App() {
         )}
       </main>
 
-      <TripPlanningModal
-        destination={selectedDestination!}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleTripSave}
-      />
+      {selectedDestination && (
+        <TripPlanningModal
+          destination={selectedDestination}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleTripSave}
+        />
+      )}
     </div>
   );
 }
