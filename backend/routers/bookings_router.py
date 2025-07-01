@@ -6,16 +6,28 @@ import random
 import string
 import uuid
 
-from ..database import get_db
-from ..auth import get_current_user
-from ..models import User, Booking, Flight, Hotel, Train, BookingStatus, BookingType
-from ..schemas import (
-    FlightSearchRequest, FlightOption, FlightBookingRequest, FlightBookingResponse,
-    HotelSearchRequest, HotelOption, HotelBookingRequest, HotelBookingResponse,
-    TrainSearchRequest, TrainOption, TrainBookingRequest, TrainBookingResponse,
-    BookingListResponse, BookingCancellationRequest, BookingCancellationResponse,
-    PaymentRequest, PaymentResponse, BookingBase
-)
+try:
+    from ..database import get_db
+    from ..auth import get_current_user
+    from ..models import User, Booking, Flight, Hotel, Train, BookingStatus, BookingType
+    from ..schemas import (
+        FlightSearchRequest, FlightOption, FlightBookingRequest, FlightBookingResponse,
+        HotelSearchRequest, HotelOption, RoomOption, HotelBookingRequest, HotelBookingResponse,
+        TrainSearchRequest, TrainOption, TrainBookingRequest, TrainBookingResponse,
+        BookingListResponse, BookingCancellationRequest, BookingCancellationResponse,
+        PaymentRequest, PaymentResponse, BookingBase
+    )
+except ImportError:
+    from database import get_db
+    from auth import get_current_user
+    from models import User, Booking, Flight, Hotel, Train, BookingStatus, BookingType
+    from schemas import (
+        FlightSearchRequest, FlightOption, FlightBookingRequest, FlightBookingResponse,
+        HotelSearchRequest, HotelOption, RoomOption, HotelBookingRequest, HotelBookingResponse,
+        TrainSearchRequest, TrainOption, TrainBookingRequest, TrainBookingResponse,
+        BookingListResponse, BookingCancellationRequest, BookingCancellationResponse,
+        PaymentRequest, PaymentResponse, BookingBase
+    )
 
 router = APIRouter()
 
@@ -257,7 +269,6 @@ async def book_hotel(
     db.refresh(booking)
     
     # Mock hotel and room details for response
-    from ..schemas import RoomOption, HotelOption
     room_details = RoomOption(
         room_id=booking_request.room_id,
         room_type="Deluxe Room",

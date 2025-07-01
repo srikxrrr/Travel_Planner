@@ -43,7 +43,7 @@ class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
 
 class UserUpdate(BaseSchema):
-    full_name: Optional[str] = None
+    full_name: Optional[str] = Field(None, min_length=1, max_length=100)
     phone_number: Optional[str] = None
     date_of_birth: Optional[date] = None
     country: Optional[str] = None
@@ -99,33 +99,13 @@ class DestinationBase(BaseSchema):
     currency: Optional[str] = None
     language: Optional[str] = None
     description: Optional[str] = None
-    best_time_to_visit: Optional[str] = None
-    average_budget_per_day: Optional[float] = None
-    safety_rating: Optional[float] = Field(None, ge=0, le=10)
-    tourist_rating: Optional[float] = Field(None, ge=0, le=10)
-
-class DestinationCreate(DestinationBase):
-    weather_info: Optional[Dict[str, Any]] = {}
-    attractions: Optional[List[Dict[str, Any]]] = []
-    local_cuisine: Optional[List[Dict[str, Any]]] = []
-    transportation_info: Optional[Dict[str, Any]] = {}
-
-class DestinationUpdate(BaseSchema):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    best_time_to_visit: Optional[str] = None
-    average_budget_per_day: Optional[float] = None
-    safety_rating: Optional[float] = Field(None, ge=0, le=10)
-    tourist_rating: Optional[float] = Field(None, ge=0, le=10)
 
 class DestinationResponse(DestinationBase):
     id: int
     weather_info: Dict[str, Any]
     attractions: List[Dict[str, Any]]
     local_cuisine: List[Dict[str, Any]]
-    transportation_info: Dict[str, Any]
     created_at: datetime
-    updated_at: Optional[datetime] = None
 
 # Trip schemas
 class TripBase(BaseSchema):
@@ -297,19 +277,19 @@ class TrainResponse(TrainBase):
 
 # Search schemas
 class FlightSearchRequest(BaseSchema):
-    origin: str = Field(..., min_length=3, max_length=3)
-    destination: str = Field(..., min_length=3, max_length=3)
+    origin: str = Field(..., min_length=3, max_length=3, description="Origin airport code (IATA)")
+    destination: str = Field(..., min_length=3, max_length=3, description="Destination airport code (IATA)")
     departure_date: date
     return_date: Optional[date] = None
     passengers: int = Field(1, ge=1, le=9)
-    travel_class: str = "Economy"
+    travel_class: str = Field("Economy", description="Economy, Premium Economy, Business, First")
 
 class TrainSearchRequest(BaseSchema):
     origin: str = Field(..., min_length=1, max_length=100)
     destination: str = Field(..., min_length=1, max_length=100)
     departure_date: date
     passengers: int = Field(1, ge=1, le=6)
-    train_class: str = "Sleeper"
+    train_class: str = Field("Sleeper", description="Sleeper, 3A, 2A, 1A")
 
 class HotelSearchRequest(BaseSchema):
     city: str = Field(..., min_length=1, max_length=100)
@@ -356,9 +336,7 @@ class WeatherResponse(BaseSchema):
     description: str
     icon: str
     wind_speed: float
-    wind_direction: int
     visibility: int
-    uv_index: Optional[float] = None
 
 # Trip planning schemas
 class TripPlanningRequest(BaseSchema):
@@ -372,6 +350,9 @@ class TripPlanningRequest(BaseSchema):
     interests: List[str] = []
     pace: str = "Balanced"
     special_requests: Optional[str] = None
+    include_flights: bool = True
+    include_hotels: bool = True
+    include_activities: bool = True
 
 class ItineraryDay(BaseSchema):
     day_number: int
@@ -706,7 +687,7 @@ class PaymentResponse(BaseSchema):
     transaction_id: str
     created_at: datetime
 
-# Trip Planning with Bookings
+# Trip Planning Schemas
 class TripPlanningRequest(BaseSchema):
     destination: str = Field(..., min_length=1, max_length=100)
     start_date: date
@@ -739,7 +720,7 @@ class TripPlanningResponse(BaseSchema):
     travel_tips: List[str] = []
     booking_timeline: List[Dict[str, Any]] = []
 
-# Search and Discovery
+# Search and Discovery Schemas
 class LocationSearchRequest(BaseSchema):
     query: str = Field(..., min_length=1, max_length=200)
     limit: int = Field(5, ge=1, le=20)
@@ -765,27 +746,3 @@ class RecommendationResponse(BaseSchema):
     tags: List[str]
     booking_available: bool = False
     booking_url: Optional[str] = None
-
-# Destination and Weather
-class WeatherResponse(BaseSchema):
-    temperature: float
-    feels_like: float
-    humidity: int
-    pressure: int
-    description: str
-    icon: str
-    wind_speed: float
-    visibility: int
-
-class DestinationResponse(BaseSchema):
-    id: int
-    name: str
-    country: str
-    city: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    description: Optional[str] = None
-    weather_info: Optional[WeatherResponse] = None
-    attractions: List[Dict[str, Any]] = []
-    local_cuisine: List[Dict[str, Any]] = []
-    created_at: datetime

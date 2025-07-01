@@ -7,20 +7,38 @@ from typing import List, Optional
 import os
 from dotenv import load_dotenv
 
-from .database import init_db, get_db
-from .auth import get_current_user
-from .models import User
-from .routers import (
-    auth_router,
-    trips_router,
-    bookings_router,
-    destinations_router,
-    recommendations_router,
-    weather_router,
-    hotels_router,
-    flights_router,
-    trains_router
-)
+try:
+    # Try relative imports first (when run as module)
+    from .database import init_db, get_db
+    from .auth import get_current_user
+    from .models import User
+    from .routers import (
+        auth_router,
+        trips_router,
+        bookings_router,
+        destinations_router,
+        recommendations_router,
+        weather_router,
+        hotels_router,
+        flights_router,
+        trains_router
+    )
+except ImportError:
+    # Fallback to absolute imports (when run directly)
+    from database import init_db, get_db
+    from auth import get_current_user
+    from models import User
+    from routers import (
+        auth_router,
+        trips_router,
+        bookings_router,
+        destinations_router,
+        recommendations_router,
+        weather_router,
+        hotels_router,
+        flights_router,
+        trains_router
+    )
 
 load_dotenv()
 

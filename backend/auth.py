@@ -7,8 +7,12 @@ from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 
-from .database import get_db
-from .models import User
+try:
+    from .database import get_db
+    from .models import User
+except ImportError:
+    from database import get_db
+    from models import User
 
 load_dotenv()
 

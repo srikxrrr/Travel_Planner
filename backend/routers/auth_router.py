@@ -2,16 +2,28 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from datetime import timedelta
 
-from ..database import get_db
-from ..auth import (
-    authenticate_user, 
-    create_access_token, 
-    get_password_hash, 
-    get_current_user,
-    ACCESS_TOKEN_EXPIRE_MINUTES
-)
-from ..models import User
-from ..schemas import UserCreate, UserLogin, UserResponse, Token, UserUpdate
+try:
+    from ..database import get_db
+    from ..auth import (
+        authenticate_user, 
+        create_access_token, 
+        get_password_hash, 
+        get_current_user,
+        ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    from ..models import User
+    from ..schemas import UserCreate, UserLogin, UserResponse, Token, UserUpdate
+except ImportError:
+    from database import get_db
+    from auth import (
+        authenticate_user, 
+        create_access_token, 
+        get_password_hash, 
+        get_current_user,
+        ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    from models import User
+    from schemas import UserCreate, UserLogin, UserResponse, Token, UserUpdate
 
 router = APIRouter()
 
