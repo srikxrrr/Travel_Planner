@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Header } from './components/Header';
-import { Hero } from './components/Hero';
-import { TripPlanningForm } from './components/TripPlanningForm';
-import { TripResults } from './components/TripResults';
-import { FeaturedDestinations } from './components/FeaturedDestinations';
-import { Footer } from './components/Footer';
+import { Hero } from './components/Hero.tsx';
+import { TripPlanningForm } from './components/TripPlanningForm.tsx';
+import { TripResults } from './components/TripResults.tsx';
+import { FeaturedDestinations } from './components/FeaturedDestinations.tsx';
+import { Footer } from './components/Footer.tsx';
 
 export interface TripPlan {
   id: string;
