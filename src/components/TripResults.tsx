@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, MapPin, Calendar, Users, DollarSign, Clock, Download, Share2, Heart, Star } from 'lucide-react';
+import { ArrowLeft, Calendar, Users, DollarSign, Clock, Download, Share2, Heart, Star } from 'lucide-react';
 import { TripPlan } from '../App';
 
 interface TripResultsProps {

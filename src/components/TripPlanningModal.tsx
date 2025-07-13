@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Users, DollarSign, FileText } from 'lucide-react';
 import { Destination, Trip } from '../types';
-import { format } from 'date-fns';
 
 interface TripPlanningModalProps {
   destination: Destination;
