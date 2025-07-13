@@ -91,6 +91,7 @@ class Destination(Base):
     attractions = Column(JSON)
     local_cuisine = Column(JSON)
     transportation_info = Column(JSON)
+    image_url = Column(String(500))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -117,6 +118,7 @@ class Trip(Base):
     special_requests = Column(Text)
     status = Column(Enum(TripStatus), default=TripStatus.PLANNING)
     itinerary = Column(JSON)
+    ai_generated = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -152,73 +154,22 @@ class Booking(Base):
     user = relationship("User", back_populates="bookings")
     trip = relationship("Trip", back_populates="bookings")
 
-class Flight(Base):
-    __tablename__ = "flights"
+class AITripPlan(Base):
+    __tablename__ = "ai_trip_plans"
     
     id = Column(Integer, primary_key=True, index=True)
-    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
-    airline = Column(String(100), nullable=False)
-    flight_number = Column(String(20), nullable=False)
-    origin_airport = Column(String(10), nullable=False)
-    destination_airport = Column(String(10), nullable=False)
-    departure_time = Column(DateTime, nullable=False)
-    arrival_time = Column(DateTime, nullable=False)
-    duration_minutes = Column(Integer)
-    aircraft_type = Column(String(50))
-    travel_class = Column(String(50))
-    baggage_allowance = Column(JSON)
-    meal_preference = Column(String(50))
-    seat_numbers = Column(JSON)
-    layovers = Column(JSON)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    destination = Column(String(200), nullable=False)
+    duration = Column(Integer, nullable=False)
+    travelers = Column(Integer, nullable=False)
+    budget = Column(String(50))
+    interests = Column(JSON)
+    generated_plan = Column(JSON)
+    estimated_cost = Column(JSON)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    booking = relationship("Booking")
-
-class Hotel(Base):
-    __tablename__ = "hotels"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
-    hotel_name = Column(String(200), nullable=False)
-    hotel_chain = Column(String(100))
-    address = Column(String(500))
-    city = Column(String(100))
-    country = Column(String(100))
-    star_rating = Column(Float)
-    check_in_date = Column(DateTime, nullable=False)
-    check_out_date = Column(DateTime, nullable=False)
-    room_type = Column(String(100))
-    room_count = Column(Integer, default=1)
-    guest_count = Column(Integer, default=1)
-    amenities = Column(JSON)
-    meal_plan = Column(String(50))
-    cancellation_policy = Column(Text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    # Relationships
-    booking = relationship("Booking")
-
-class Train(Base):
-    __tablename__ = "trains"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
-    train_name = Column(String(100), nullable=False)
-    train_number = Column(String(20), nullable=False)
-    origin_station = Column(String(100), nullable=False)
-    destination_station = Column(String(100), nullable=False)
-    departure_time = Column(DateTime, nullable=False)
-    arrival_time = Column(DateTime, nullable=False)
-    duration_minutes = Column(Integer)
-    train_class = Column(String(50))
-    seat_numbers = Column(JSON)
-    berth_preferences = Column(JSON)
-    meal_preference = Column(String(50))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    # Relationships
-    booking = relationship("Booking")
+    user = relationship("User")
 
 class Recommendation(Base):
     __tablename__ = "recommendations"
@@ -238,26 +189,6 @@ class Recommendation(Base):
     external_links = Column(JSON)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    destination = relationship("Destination")
-
-class WeatherData(Base):
-    __tablename__ = "weather_data"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    destination_id = Column(Integer, ForeignKey("destinations.id"), nullable=False)
-    date = Column(DateTime, nullable=False)
-    temperature_min = Column(Float)
-    temperature_max = Column(Float)
-    humidity = Column(Float)
-    precipitation = Column(Float)
-    wind_speed = Column(Float)
-    weather_condition = Column(String(100))
-    weather_description = Column(String(200))
-    uv_index = Column(Float)
-    visibility = Column(Float)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     destination = relationship("Destination")

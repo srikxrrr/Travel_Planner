@@ -14,7 +14,7 @@ async def get_recommendations(
     current_user: User = Depends(get_current_user)
 ):
     """Get travel recommendations"""
-    # Mock recommendations
+    # Mock recommendations - in production, this would query the database
     recommendations = [
         {
             "id": 1,
@@ -25,8 +25,7 @@ async def get_recommendations(
             "price_range": "$$",
             "location": "City Center",
             "tags": ["authentic", "local", "popular"],
-            "booking_available": True,
-            "booking_url": "https://example.com/book"
+            "image_urls": ["https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg"]
         },
         {
             "id": 2,
@@ -37,8 +36,23 @@ async def get_recommendations(
             "price_range": "$",
             "location": "Old Town",
             "tags": ["history", "culture", "educational"],
-            "booking_available": False
+            "image_urls": ["https://images.pexels.com/photos/1004584/pexels-photo-1004584.jpeg"]
+        },
+        {
+            "id": 3,
+            "category": "activity",
+            "name": "Guided Walking Tour",
+            "description": "Explore hidden gems with local expert guide",
+            "rating": 4.8,
+            "price_range": "$$",
+            "location": "Various",
+            "tags": ["walking", "guide", "hidden gems"],
+            "image_urls": ["https://images.pexels.com/photos/1320684/pexels-photo-1320684.jpeg"]
         }
     ]
+    
+    # Filter by category if provided
+    if category:
+        recommendations = [r for r in recommendations if r["category"] == category]
     
     return [RecommendationResponse(**rec) for rec in recommendations]

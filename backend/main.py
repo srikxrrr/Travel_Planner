@@ -17,9 +17,7 @@ from .routers import (
     destinations_router,
     recommendations_router,
     weather_router,
-    hotels_router,
-    flights_router,
-    trains_router
+    ai_router
 )
 
 load_dotenv()
@@ -35,7 +33,7 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app
 app = FastAPI(
     title="Travel Planner API",
-    description="A comprehensive travel planning and booking backend API",
+    description="A comprehensive AI-powered travel planning and booking backend API",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -43,7 +41,7 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure for production
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -59,9 +57,7 @@ app.include_router(bookings_router.router, prefix="/api/v1/bookings", tags=["Boo
 app.include_router(destinations_router.router, prefix="/api/v1/destinations", tags=["Destinations"])
 app.include_router(recommendations_router.router, prefix="/api/v1/recommendations", tags=["Recommendations"])
 app.include_router(weather_router.router, prefix="/api/v1/weather", tags=["Weather"])
-app.include_router(hotels_router.router, prefix="/api/v1/hotels", tags=["Hotels"])
-app.include_router(flights_router.router, prefix="/api/v1/flights", tags=["Flights"])
-app.include_router(trains_router.router, prefix="/api/v1/trains", tags=["Trains"])
+app.include_router(ai_router.router, prefix="/api/v1/ai", tags=["AI Services"])
 
 @app.get("/")
 async def root():
@@ -83,7 +79,7 @@ async def health_check():
         "timestamp": "2024-01-01T00:00:00Z",
         "services": {
             "database": "connected",
-            "redis": "connected",
+            "ai_service": "available",
             "external_apis": "available"
         }
     }
